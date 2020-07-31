@@ -181,7 +181,7 @@
 
 	.u-position-bottom {
 		left: 50%;
-		bottom: 20%;
+		bottom: 10%;
 		transform: translateX(-50%) translateY(-50%);
 	}
 
