@@ -3,7 +3,7 @@
 		<view class="u-keyboard-grids">
 			<block>
 				<view class="u-keyboard-grids-item" v-for="(group, i) in abc ? EngKeyBoardList : areaList" :key="i">
-					<view :hover-stay-time="100" @tap="carInputClick(i, j)" hover-class="u-carinput-hover" class="u-keyboard-grids-btn"
+					<view :hover-stay-time="100" @tap="carInputClick(i, j)" hover-class="u-carinput-hover" class="u-keyboard-grids-btn" :class="{'u-keyboard-grids-btn-abc':abc}"
 					 v-for="(item, j) in group" :key="j">
 						{{ item }}
 					</view>
@@ -76,16 +76,23 @@
 					'澳',
 					'新',
 					'使',
-					'学'
+					'学',
+					'临',
+					'领',
+					'警'
 				];
 				let tmp = [];
 				// 打乱顺序
 				if (this.random) data = this.$u.randomArray(data);
 				// 切割成二维数组
-				tmp[0] = data.slice(0, 10);
-				tmp[1] = data.slice(10, 20);
-				tmp[2] = data.slice(20, 30);
-				tmp[3] = data.slice(30, 36);
+				// tmp[0] = data.slice(0, 10);
+				// tmp[1] = data.slice(10, 20);
+				// tmp[2] = data.slice(20, 30);
+				// tmp[3] = data.slice(30, 36);
+				tmp[0] = data.slice(0, 11);
+				tmp[1] = data.slice(11, 22);
+				tmp[2] = data.slice(22, 33);
+				tmp[3] = data.slice(33, 39);
 				return tmp;
 			},
 			EngKeyBoardList() {
@@ -183,8 +190,10 @@
 
 	.u-keyboard-grids-btn {
 		text-decoration: none;
-		width: 62rpx;
-		flex: 0 0 64rpx;
+		// width: 62rpx;
+		// flex: 0 0 64rpx;
+		width: 58rpx;
+		flex: 0 0 60rpx;
 		height: 80rpx;
 		display: inline-block;
 		font-size: 36rpx;
@@ -196,7 +205,10 @@
 		box-shadow: 0 2rpx 0rpx #888992;
 		font-weight: 500;
 	}
-
+	.u-keyboard-grids-btn-abc{
+		width: 62rpx;
+		flex: 0 0 64rpx;
+	}
 	.u-carinput-hover {
 		background-color: rgb(185, 188, 195) !important;
 	}
