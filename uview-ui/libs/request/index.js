@@ -1,10 +1,21 @@
+
 import deepMerge from "../function/deepMerge";
 import validate from "../function/test";
+
 class Request {
 	// 设置全局默认配置
 	setConfig(customConfig) {
 		// 深度合并对象，否则会造成对象深层属性丢失
 		this.config = deepMerge(this.config, customConfig);
+	}
+	
+	// 延迟
+	delay() {
+		return new Promise((resolve, reject) =>{
+			setTimeout(() => {
+				resolve();
+			}, 200);
+		});
 	}
 
 	// 主要请求部分
@@ -23,11 +34,12 @@ class Request {
 		options.responseType = options.responseType || this.config.responseType;
 		options.url = options.url || '';
 		options.params = options.params || {};
-		options.header = Object.assign(this.config.header, options.header);
+		options.header = options.header;
 		options.method = options.method || this.config.method;
-
+		options.currentRetryTime = options.currentRetryTime || 0;
 		return new Promise((resolve, reject) => {
 			options.complete = (response) => {
+				// console.log('======= request response:', response);
 				// 请求返回后，隐藏loading(如果请求返回快的话，可能会没有loading)
 				uni.hideLoading();
 				// 清除定时器，如果请求回来了，就无需loading
@@ -51,6 +63,9 @@ class Request {
 					}
 				} else {
 					if (response.statusCode == 200) {
+						if(options.currentRetryTime > 0) {
+							console.log('【接口重试成功】 ==================response:', options.currentRetryTime, options.url, response);
+						}
 						if (this.interceptor.response && typeof this.interceptor.response === 'function') {
 							let resInterceptors = this.interceptor.response(response.data);
 							if (resInterceptors !== false) {
@@ -64,12 +79,66 @@ class Request {
 						}
 					} else {
 						// 不返回原始数据的情况下，服务器状态码不为200，modal弹框提示
-						// if(response.errMsg) {
-						// 	uni.showModal({
-						// 		title: response.errMsg
-						// 	});
-						// }
-						reject(response)
+						console.info(response.errMsg, options.url)
+						if(response.errMsg) {
+							let msg = -1;
+							if((response.errMsg).indexOf('request:fail') != -1) {  //response.errMsg === 'request:fail'
+								if((response.errMsg).indexOf('statusCode:-1') != -1){
+									msg = `网络异常，请稍后重试`
+								}else{
+									msg = `请求失败，请稍候重试`+ ((response.statusCode) ? `[${response.statusCode}]` : '');	
+								}
+								// 接口重试3次
+								console.log('================重试 ', options.url, options.currentRetryTime, this.retryCount);
+								options.currentRetryTime++;
+								if(options.currentRetryTime >= this.retryCount) {
+									return reject(response)
+								}
+								// uni.showToast({
+								// 	title: `正在重试 ${options.currentRetryTime}`,
+								// 	icon: 'none'
+								// });
+								
+								return this.delay().then(() => {
+									resolve(this.request(options));
+								});
+							}
+							else if((response.errMsg).indexOf('request:ok') != -1) {//response.errMsg === 'request:ok'
+								switch(response.statusCode) {
+									case 401: 
+										if(response.data && response.data.error == 'unauthorized') return reject(response);
+										msg = '账号异常，请重新登录';
+										if(typeof this.config.refreshToken === 'function') {
+											return this.config.refreshToken().then(res => {
+												if(!res) return reject({success: false, message: msg});
+												resolve(this.request(options));
+											});
+										}
+										else {
+											resolve(this.request(options));
+										}
+									break;
+									default: 
+										msg = response.data && response.data.message ? response.data.message : `请求失败，请稍候重试`;
+										msg += ((response.statusCode) ? `[${response.statusCode}]` : '');
+								}
+							}
+							if(msg != -1) {
+								response.data = response.data || {};
+								response.data.message = msg;
+								// uni.showToast({
+								// 	title: msg,
+								// 	icon: 'none'
+								// });
+							}
+							
+							// uni.showModal({
+							// 	title: response.errMsg
+							// });
+						}
+						
+						reject(response);
+						
 					}
 				}
 			}
@@ -116,6 +185,8 @@ class Request {
 			originalData: false, // 是否在拦截器中返回服务端的原始数据，见文档说明
 			loadingMask: true, // 展示loading的时候，是否给一个透明的蒙层，防止触摸穿透
 		}
+		
+		this.retryCount = 3;
 	
 		// 拦截器
 		this.interceptor = {

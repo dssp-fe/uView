@@ -161,7 +161,7 @@
 				for (let i = this.children.length - 1; i >= 0; i--) {
 					const preAnchorHeight = i > 0 ? children[i - 1].height : 0;
 					const reachTop = sticky ? preAnchorHeight : 0;
-					if (reachTop >= children[i].top) {
+					if (reachTop >= children[i].top - uni.upx2px(this.offsetTop)) {
 						return i;
 					}
 				}
@@ -187,7 +187,7 @@
 					let isActiveAnchorSticky = false;
 					if (active !== -1) {
 						isActiveAnchorSticky =
-							children[active].top <= 0;
+							children[active].top <= this.offsetTop;
 					}
 					children.forEach((item, index) => {
 						if (index === active) {
@@ -263,7 +263,7 @@
 					this.$emit('select', anchor.index);
 					uni.pageScrollTo({
 						duration: 0,
-						scrollTop: anchor.top + this.scrollTop
+						scrollTop: anchor.top + this.scrollTop - uni.upx2px(this.offsetTop)
 					});
 				}
 			}

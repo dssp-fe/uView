@@ -62,6 +62,10 @@ import getParent from './libs/function/getParent.js'
 import $parent from './libs/function/$parent.js'
 
 
+// DSFE 扩展
+// confirm 确认框
+import $confirm from './libs/function/$confirm.js'
+
 // 配置信息
 import config from './libs/config/config.js'
 // 各个需要fixed的地方的z-index配置文件
@@ -96,6 +100,7 @@ const $u = {
 	type: ['primary', 'success', 'error', 'warning', 'info'],
 	http,
 	toast,
+	$confirm,
 	config, // uView配置信息相关，比如版本号
 	zIndex
 }

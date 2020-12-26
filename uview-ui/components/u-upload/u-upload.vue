@@ -3,6 +3,7 @@
 		<view
 			v-if="showUploadList"
 			class="u-list-item u-preview-wrap"
+			
 			v-for="(item, index) in lists"
 			:key="index"
 			:style="{
@@ -11,22 +12,27 @@
 			}"
 		>
 			<view
-				v-if="deletable"
+				v-if="deletable && item.progress >= 100"
 				class="u-delete-icon"
-				@tap.stop="deleteItem(index)"
+				@tap.stop="deleteItem(index,item)"
 				:style="{
 					background: delBgColor
 				}"
 			>
 				<u-icon class="u-icon" :name="delIcon" size="20" :color="delColor"></u-icon>
 			</view>
-			<u-line-progress
+			<view class="u-loading_background" v-if="showProgress && item.progress < 100 && !item.error" >
+				<u-loading mode="circle" size="50" v-if="showProgress && item.progress < 100 && !item.error" color="#fff"></u-loading>
+			</view>
+			<!-- <u-line-progress
 				v-if="showProgress && item.progress > 0 && !item.error"
 				:show-percent="false"
 				height="16"
 				class="u-progress"
+				:striped="true"
+				:striped-active="true"
 				:percent="item.progress"
-			></u-line-progress>
+			></u-line-progress> -->
 			<view @tap.stop="retry(index)" v-if="item.error" class="u-error-btn">点击重试</view>
 			<image @tap.stop="doPreviewImage(item.url || item.path, index)" class="u-preview-image" v-if="!item.isImage" :src="item.url || item.path" :mode="imageMode"></image>
 		</view>
@@ -237,7 +243,7 @@ export default {
 			default() {
 				return ['png', 'jpg', 'jpeg', 'webp', 'gif'];
 			}
-		},
+		}
 	},
 	mounted() {},
 	data() {
@@ -293,8 +299,7 @@ export default {
 					fail: reject
 				});
 			});
-			chooseFile
-				.then(res => {
+			chooseFile.then(res => {
 					let file = null;
 					let listOldLength = this.lists.length;
 					res.tempFiles.map((val, index) => {
@@ -375,56 +380,70 @@ export default {
 				let beforeResponse = this.beforeUpload(index, this.lists);
 				// 判断是否返回了promise
 				if (!!beforeResponse && typeof beforeResponse.then === 'function') {
-					await beforeResponse.then(res => {
-						// promise返回成功，不进行动作，继续上传
-					}).catch(err => {
-						// 进入catch回调的话，继续下一张
-						return this.uploadFile(index + 1);
-					})
+					let res = await beforeResponse;
+					this.lists[index].url = res
+					
+					// await beforeResponse.then(res => {
+					// 	// promise返回成功，不进行动作，继续上传
+					// 	// let data = this.toJson && this.$u.test.jsonString(res) ? JSON.parse(res) : res;
+					// 	// this.lists[index].response = data;
+					// 	// this.lists[index].progress = 100;
+					// 	// this.lists[index].error = false;
+					// 	// this.$emit('on-success', data, index, this.lists);
+					// 	this.lists[index].url = res
+					// }).catch(err => {
+					// 	// 进入catch回调的话，继续下一张
+					// 	return this.uploadFile(index + 1);
+					// })
 				} else if(beforeResponse === false) {
 					 // 如果返回false，继续下一张图片的上传
 					return this.uploadFile(index + 1);
 				}
-			}
-			this.lists[index].error = false;
-			this.uploading = true;
-			// 创建上传对象
-			const task = uni.uploadFile({
-				url: this.action,
-				filePath: this.lists[index].url,
-				name: this.name,
-				formData: this.formData,
-				header: this.header,
-				success: res => {
-					// 判断是否json字符串，将其转为json格式
-					let data = this.toJson && this.$u.test.jsonString(res.data) ? JSON.parse(res.data) : res.data;
-					if (![200, 201].includes(res.statusCode)) {
-						this.uploadError(index, data);
-					} else {
-						// 上传成功
-						this.lists[index].response = data;
-						this.lists[index].progress = 100;
-						this.lists[index].error = false;
-						this.$emit('on-success', data, index, this.lists);
+			} 
+			// else {
+			
+				this.lists[index].error = false;
+				this.uploading = true;
+				// 创建上传对象
+				const task = uni.uploadFile({
+					url: this.action,
+					filePath: this.lists[index].url,
+					name: this.name,
+					formData: this.formData,
+					header: this.header,
+					success: res => {
+						// 判断是否json字符串，将其转为json格式
+						let data = this.toJson && this.$u.test.jsonString(res.data) ? JSON.parse(res.data) : res.data;
+						if (![200, 201].includes(res.statusCode)) {
+							this.uploadError(index, data);
+						} else {
+							// 上传成功
+							this.lists[index].response = data;
+							this.lists[index].progress = 100;
+							this.lists[index].error = false;
+							this.$emit('on-success', data, index, this.lists);
+						}
+					},
+					fail: e => {
+						this.uploadError(index, e);
+					},
+					complete: res => {
+						uni.hideLoading();
+						this.uploading = false;
+						this.uploadFile(index + 1);
+						this.$emit('on-change', res, index, this.lists);
 					}
-				},
-				fail: e => {
-					this.uploadError(index, e);
-				},
-				complete: res => {
-					uni.hideLoading();
-					this.uploading = false;
-					this.uploadFile(index + 1);
-					this.$emit('on-change', res, index, this.lists);
-				}
-			});
-			task.onProgressUpdate(res => {
-				if (res.progress > 0) {
-					this.lists[index].progress = res.progress;
-					this.$emit('on-progress', res, index, this.lists);
-				}
-			});
+				});
+				
+				task.onProgressUpdate(res => {
+					if (res.progress > 0) {
+						this.lists[index].progress = res.progress;
+						this.$emit('on-progress', res, index, this.lists);
+					}
+				});
+			// }
 		},
+		
 		// 上传失败
 		uploadError(index, err) {
 			this.lists[index].progress = 0;
@@ -434,7 +453,7 @@ export default {
 			this.showToast('上传失败，请重试');
 		},
 		// 删除一个图片
-		deleteItem(index) {
+		deleteItem(index, data) {
 			uni.showModal({
 				title: '提示',
 				content: '您确定要删除此项吗？',
@@ -445,7 +464,7 @@ export default {
 						}
 						this.lists.splice(index, 1);
 						this.$forceUpdate();
-						this.$emit('on-remove', index, this.lists);
+						this.$emit('on-remove', index, this.lists, data);
 						this.showToast('移除成功');
 					}
 				}
@@ -463,9 +482,26 @@ export default {
 		doPreviewImage(url, index) {
 			if (!this.previewFullImage) return;
 			const images = this.lists.map(item => item.url || item.path);
+			let u = url.lastIndexOf("_small")
+			let newUrl = ''
+			if(u != -1){
+				newUrl = url.substring(0,u) + url.substring(u+6)
+			}else{
+				newUrl = url
+			}
+			
+			let newImages = []
+			images.forEach(x =>{
+				let n = x.lastIndexOf("_small")
+				if(n != -1){
+					newImages.push(x.substring(0,n) + x.substring(n+6));
+				}else{
+					newImages.push(x);
+				};
+			})	
 			uni.previewImage({
-				urls: images,
-				current: url,
+				urls: newImages,//images,
+				current: index,//newUrl,//url,
 				success: () => {
 					this.$emit('on-preview', url, this.lists);
 				},
@@ -476,6 +512,21 @@ export default {
 					});
 				}
 			});
+			// if (!this.previewFullImage) return;
+			// const images = this.lists.map(item => item.url || item.path);
+			// uni.previewImage({
+			// 	urls: images,
+			// 	current: index,
+			// 	success: () => {
+			// 		this.$emit('on-preview', url, this.lists);
+			// 	},
+			// 	fail: () => {
+			// 		uni.showToast({
+			// 			title: '预览图片失败',
+			// 			icon: 'none'
+			// 		});
+			// 	}
+			// });
 		},
 		// 判断文件后缀是否允许
 		checkFileExt(file) {
@@ -594,4 +645,18 @@ export default {
 	z-index: 9;
 	line-height: 1;
 }
+.u-loading_background{
+	background-color: #000;
+	opacity: 0.5;
+	position: absolute;
+	right: 0;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	z-index: 2;
+	display: flex;
+	justify-content: center;
+	align-items: center
+}
+
 </style>
