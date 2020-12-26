@@ -161,6 +161,20 @@ export default {
 			backgroundStyle: {}
 		};
 	},
+	watch: {
+		src: {
+			immediate: true,
+			handler (n) {
+				if(!n) {
+					// 如果传入null或者''，或者false，或者undefined，标记为错误状态
+					this.isError = true;
+					this.loading = false;
+				} else {
+					this.isError = false;
+				}
+			}
+		}
+	},
 	computed: {
 		wrapStyle() {
 			let style = {};
@@ -184,10 +198,10 @@ export default {
 			this.$emit('click');
 		},
 		// 图片加载失败
-		onErrorHandler() {
+		onErrorHandler(err) {
 			this.loading = false;
 			this.isError = true;
-			this.$emit('error');
+			this.$emit('error', err);
 		},
 		// 图片加载完成，标记loading结束
 		onLoadHandler() {
@@ -241,7 +255,7 @@ export default {
 		left: 0;
 		width: 100%;
 		height: 100%;
-		display: flex;
+		@include vue-flex;
 		align-items: center;
 		justify-content: center;
 		background-color: $u-bg-color;

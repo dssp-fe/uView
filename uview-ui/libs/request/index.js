@@ -23,18 +23,19 @@ class Request {
 		// 检查请求拦截
 		if (this.interceptor.request && typeof this.interceptor.request === 'function') {
 			let tmpConfig = {};
-			let interceptorReuest = this.interceptor.request(options);
-			if (interceptorReuest === false) {
-				// 返回一个处于pending状态中的Promise，来取消原promise
+			let interceptorRequest = this.interceptor.request(options);
+			if (interceptorRequest === false) {
+				// 返回一个处于pending状态中的Promise，来取消原promise，避免进入then()回调
 				return new Promise(()=>{});
 			}
-			this.options = interceptorReuest;
+			this.options = interceptorRequest;
 		}
 		options.dataType = options.dataType || this.config.dataType;
 		options.responseType = options.responseType || this.config.responseType;
 		options.url = options.url || '';
 		options.params = options.params || {};
 		options.header = options.header;
+		// options.header = Object.assign({}, this.config.header, options.header);
 		options.method = options.method || this.config.method;
 		options.currentRetryTime = options.currentRetryTime || 0;
 		return new Promise((resolve, reject) => {
@@ -44,7 +45,7 @@ class Request {
 				uni.hideLoading();
 				// 清除定时器，如果请求回来了，就无需loading
 				clearTimeout(this.config.timer);
-				this.timer = null;
+				this.config.timer = null;
 				// 判断用户对拦截返回数据的要求，如果originalData为true，返回所有的数据(response)到拦截器，否则只返回response.data
 				if(this.config.originalData) {
 					// 判断是否存在拦截器
@@ -186,7 +187,7 @@ class Request {
 			loadingMask: true, // 展示loading的时候，是否给一个透明的蒙层，防止触摸穿透
 		}
 		
-		this.retryCount = 3;
+		this.retryCount = 1;
 	
 		// 拦截器
 		this.interceptor = {

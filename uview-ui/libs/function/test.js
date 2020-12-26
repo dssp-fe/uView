@@ -16,8 +16,7 @@ function mobile(value) {
  * 验证URL格式
  */
 function url(value) {
-	return /^((https|http|ftp|rtsp|mms):\/\/)(([0-9a-zA-Z_!~*'().&=+$%-]+: )?[0-9a-zA-Z_!~*'().&=+$%-]+@)?(([0-9]{1,3}.){3}[0-9]{1,3}|([0-9a-zA-Z_!~*'()-]+.)*([0-9a-zA-Z][0-9a-zA-Z-]{0,61})?[0-9a-zA-Z].[a-zA-Z]{2,6})(:[0-9]{1,4})?((\/?)|(\/[0-9a-zA-Z_!~*'().;?:@&=+$,%#-]+)+\/?)$/
-		.test(value)
+	return /http(s)?:\/\/([\w-]+\.)+[\w-]+(\/[\w-.\/?%&=]*)?/.test(value)
 }
 
 /**
@@ -191,12 +190,18 @@ function array(value) {
 	}
 }
 
-
 /**
  * 是否对象
  */
 function object(value) {
 	return Object.prototype.toString.call(value) === '[object Object]';
+}
+
+/**
+ * 是否短信验证码
+ */
+function code(value, len = 6) {
+	return new RegExp(`^\\d{${len}}$`).test(value);
 }
 
 
@@ -222,5 +227,6 @@ export default {
 	jsonString,
 	landline,
 	object,
-	array
+	array,
+	code
 }

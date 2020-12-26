@@ -60,6 +60,14 @@ import toast from './libs/function/toast.js'
 import getParent from './libs/function/getParent.js'
 // 获取整个父组件
 import $parent from './libs/function/$parent.js'
+// 获取sys()和os()工具方法
+// 获取设备信息，挂载到$u的sys()(system的缩写)属性中，
+// 同时把安卓和ios平台的名称"ios"和"android"挂到$u.os()中，方便取用
+import {sys, os} from './libs/function/sys.js'
+// 防抖方法
+import debounce from './libs/function/debounce.js'
+// 节流方法
+import throttle from './libs/function/throttle.js'
 
 
 // DSFE 扩展
@@ -78,8 +86,11 @@ const $u = {
 	date: timeFormat, // 另名date
 	timeFrom,
 	colorGradient: colorGradient.colorGradient,
+	colorToRgba: colorGradient.colorToRgba,
 	guid,
 	color,
+	sys,
+	os,
 	type2icon,
 	randomArray,
 	wranning,
@@ -102,11 +113,16 @@ const $u = {
 	toast,
 	$confirm,
 	config, // uView配置信息相关，比如版本号
-	zIndex
+	zIndex,
+	debounce,
+	throttle,
 }
 
+// $u挂载到uni对象上
+uni.$u = $u
+
 const install = Vue => {
-	Vue.mixin(mixin)
+	Vue.mixin(mixin) 
 	if (Vue.prototype.openShare) {
 		Vue.mixin(mpShare);
 	}
@@ -122,10 +138,6 @@ const install = Vue => {
 	Vue.filter('timeFrom', (timestamp, format) => {
 		return timeFrom(timestamp, format)
 	})
-	// 获取设备信息，挂载到$u的sys(system的缩写)属性中，
-	// 同时把安卓和ios平台的名称"ios"和"android"挂到$u.os中，方便取用
-	$u.sys = uni.getSystemInfoSync();
-	$u.os = $u.sys.platform;
 	Vue.prototype.$u = $u
 }
 

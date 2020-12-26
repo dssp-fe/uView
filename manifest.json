@@ -2,7 +2,7 @@
     "name" : "uView",
     "appid" : "__UNI__60F4B81",
     "description" : "多平台快速开发的UI框架",
-    "versionName" : "1.5.6",
+    "versionName" : "1.8.2",
     "versionCode" : "100",
     "transformPx" : false,
     "app-plus" : {
@@ -107,14 +107,21 @@
     },
     "mp-alipay" : {
         "usingComponents" : true,
-		"component2": true
+        "component2" : true
+    },
+    "mp-qq" : {
+        "optimization" : {
+            "subPackages" : true
+        },
+        "appid" : "15646153"
     },
     "mp-baidu" : {
         "usingComponents" : true,
         "appid" : "17597421"
     },
     "mp-toutiao" : {
-        "usingComponents" : true
+        "usingComponents" : true,
+        "appid" : "tt2bc55d78b4ff50bf"
     },
     "h5" : {
         "template" : "template.h5.html",
@@ -124,8 +131,9 @@
         },
         "optimization" : {
             "treeShaking" : {
-                "enable" : true
+                "enable" : false
             }
-        }
+        },
+        "title" : "uView UI"
     }
 }

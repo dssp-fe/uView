@@ -14,7 +14,8 @@
 					    class="u-title u-line-1"
 					    :style="{
 							color: titleColor,
-							fontSize: titleSize + 'rpx'
+							fontSize: titleSize + 'rpx',
+							fontWeight: titleBold ? 'bold' : 'normal'
 						}">
 						{{ title }}
 					</view>
@@ -114,6 +115,11 @@
 			titleColor: {
 				type: String,
 				default: '#606266'
+			},
+			// 标题字体是否加粗
+			titleBold: {
+				type: Boolean,
+				default: false
 			},
 			// 标题的字体大小
 			titleSize: {
@@ -221,7 +227,9 @@
 			goBack() {
 				// 如果自定义了点击返回按钮的函数，则执行，否则执行返回逻辑
 				if (typeof this.customBack === 'function') {
-					this.customBack();
+					// 在微信，支付宝等环境(H5正常)，会导致父组件定义的customBack()函数体中的this变成子组件的this
+					// 通过bind()方法，绑定父组件的this，让this.customBack()的this为父组件的上下文
+					this.customBack.bind(this.$u.$parent.call(this))();
 				} else {
 					uni.navigateBack();
 				}
@@ -250,14 +258,14 @@
 	}
 
 	.u-navbar-inner {
-		display: flex;
+		@include vue-flex;
 		justify-content: space-between;
 		position: relative;
 		align-items: center;
 	}
 
 	.u-back-wrap {
-		display: flex;
+		@include vue-flex;
 		align-items: center;
 		flex: 1;
 		flex-grow: 0;
@@ -270,7 +278,7 @@
 	}
 
 	.u-navbar-content-title {
-		display: flex;
+		@include vue-flex;
 		align-items: center;
 		justify-content: center;
 		flex: 1;
@@ -294,14 +302,14 @@
 
 	.u-navbar-right {
 		flex: 1;
-		display: flex;
+		@include vue-flex;
 		align-items: center;
 		justify-content: flex-end;
 	}
 
 	.u-slot-content {
 		flex: 1;
-		display: flex;
+		@include vue-flex;
 		align-items: center;
 	}
 </style>
